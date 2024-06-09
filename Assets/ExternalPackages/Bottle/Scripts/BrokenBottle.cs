@@ -4,24 +4,25 @@ using UnityEngine;
 
 public class BrokenBottle : MonoBehaviour
 {
-    [SerializeField] GameObject[] pieces;
-    [SerializeField] float velMultiplier = 2f;
-    [SerializeField] float timeBeforeDestroying = 60f;
+    [SerializeField] float outwardExplosionForceModifier = 1f;
+    [SerializeField] float upwardsModifier = 0.5f;
+    [SerializeField] float randomForce = 1f; // Added for extra random force
+    [SerializeField] float explosionModifier = 0.1f;
 
-    void Start()
+    public void RandomVelocities(Vector3 collisionPoint, Vector3 collisionDirection, float collisionSpeed)
     {
-        Destroy(this.gameObject, timeBeforeDestroying);
-    }
-    
-    public void RandomVelocities()
-    {
-        for(int i = 0; i <= pieces.Length - 1; i++)
+        float scaledExplosionForce = collisionSpeed * explosionModifier;
+        foreach (Transform shard in transform)
         {
-            float xVel = UnityEngine.Random.Range(0f, 1f);
-            float yVel = UnityEngine.Random.Range(0f, 1f);
-            float zVel = UnityEngine.Random.Range(0f, 1f);
-            Vector3 vel = new Vector3(velMultiplier * xVel, velMultiplier * yVel, velMultiplier * zVel);
-            pieces[i].GetComponent<Rigidbody>().velocity = vel;
+            Rigidbody rb = shard.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                Vector3 explosionDir = (shard.position - collisionPoint).normalized * outwardExplosionForceModifier + collisionDirection * upwardsModifier;
+                Vector3 randomDir = Random.insideUnitSphere * randomForce; // Add some randomness
+
+                rb.AddForce((explosionDir + randomDir) * scaledExplosionForce, ForceMode.Impulse);
+                rb.AddTorque(Random.insideUnitSphere * scaledExplosionForce, ForceMode.Impulse);
+            }
         }
     }
 }
